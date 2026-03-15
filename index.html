@@ -332,7 +332,7 @@ section { padding: 100px 24px; }
 
 /* TRUST */
 .trust-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr);
+  display: grid; grid-template-columns: 1fr;
   gap: 24px; margin-top: 48px;
 }
 .trust-card {
@@ -414,7 +414,6 @@ footer {
   .competitor-tag { justify-self: start; }
   .steps-grid { grid-template-columns: 1fr; }
   .pricing-grid { grid-template-columns: 1fr; max-width: 420px; margin-left: auto; margin-right: auto; }
-  .trust-grid { grid-template-columns: 1fr; }
   .footer-inner { flex-direction: column; }
   .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
 }
@@ -771,16 +770,12 @@ footer {
     <h2 class="section-title">Built for the migrations everyone else ignores.</h2>
     <div class="trust-grid">
       <div class="trust-card">
-        <h4>Apache 2.0</h4>
-        <p>The core migration engine is fully open source. No bait-and-switch. No open-core gotchas on the features that matter. Inspect the code, fork it, contribute to it.</p>
-      </div>
-      <div class="trust-card">
-        <h4>Every Deployment</h4>
-        <p>OpenSearch is Apache 2.0 and governed by the Linux Foundation. Elasticsearch is triple-licensed under AGPLv3, ELv2, and SSPL (as of September 2024). Kravex supports every deployment — elastic.co Cloud, AWS OpenSearch Service, GCP, Azure, bare metal, self-hosted. Not just one vendor.</p>
-      </div>
-      <div class="trust-card">
-        <h4>Battle-Tested Patterns</h4>
-        <p>TB-scale migrations between Elasticsearch and OpenSearch are full of edge cases — version incompatibilities, mapping drift, shard rebalancing under load, scroll context timeouts. Kravex packages those hard-won engineering patterns into a single tool.</p>
+        <h4>Every Deployment. Every Direction.</h4>
+        <p>If it speaks the Elasticsearch or OpenSearch API, Kravex can move it. Source or destination — doesn't matter.</p>
+        <p style="margin-top: 16px;"><strong>Managed services:</strong> AWS OpenSearch Service, Elastic Cloud, Aiven, Instaclustr (NetApp), Bonsai, DigitalOcean, OVHcloud, Oracle OCI — any managed offering that exposes an ES or OpenSearch endpoint.</p>
+        <p style="margin-top: 12px;"><strong>Self-hosted:</strong> Kubernetes via ECK or the OpenSearch K8s Operator, Docker Compose, Helm charts, bare-metal RPM/DEB installs, Ansible-provisioned VMs — however you run your clusters.</p>
+        <p style="margin-top: 12px;"><strong>On-prem:</strong> Air-gapped data centers, private cloud, behind a VPN — Kravex is a CLI binary with a TOML config. No SaaS dependency, no phone-home, no cloud account required.</p>
+        <p style="margin-top: 16px;">Other tools lock you into a single vendor's ecosystem. AWS Migration Assistant only targets Amazon OpenSearch Service. Elastic's reindex API requires direct cluster connectivity. Kravex works across every combination — managed to self-hosted, on-prem to cloud, or anything in between. Your infrastructure choices are yours. The migration tool shouldn't be the constraint.</p>
       </div>
     </div>
   </div>
