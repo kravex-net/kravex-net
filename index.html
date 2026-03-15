@@ -3,31 +3,40 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kravex — TB-Scale Elasticsearch Migration</title>
-<meta name="description" content="Migrate terabytes from Elasticsearch and OpenSearch to ClickHouse, OpenObserve, Parseable, and more. Open source. Production-ready. Weekend-fast.">
+<title>Kravex — Elasticsearch &amp; OpenSearch Migration Tool</title>
+<meta name="description" content="The open-source migration engine for Elasticsearch and OpenSearch. ES 5–8, OpenSearch 1–3. Any version, any direction. Raw index-to-index data movement across every version combination.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg-primary: #0d1117;
-  --bg-secondary: #161b22;
-  --bg-tertiary: #1c2333;
-  --bg-card: #1a1f2e;
-  --accent: #38bdf8;
-  --accent-dim: #1e6e99;
-  --accent-glow: rgba(56, 189, 248, 0.15);
-  --text-primary: #e6edf3;
-  --text-secondary: #8b949e;
-  --text-muted: #6e7681;
-  --border: #30363d;
-  --green: #3fb950;
-  --red: #f85149;
-  --yellow: #d29922;
+  --bg-primary: #09090b;
+  --bg-secondary: #0f0f12;
+  --bg-tertiary: #151518;
+  --bg-card: #151518;
+  --accent: #c48a1a;
+  --accent-bright: #d9a033;
+  --accent-dim: #c48a1a15;
+  --accent-glow: #c48a1a30;
+  --crimson: #c92a2a;
+  --crimson-bright: #e03535;
+  --crimson-dim: #c92a2a15;
+  --text-primary: #e4e2de;
+  --text-secondary: #84827c;
+  --text-muted: #54524d;
+  --border: #23232a;
+  --border-bright: #2e2e36;
+  --green: #c48a1a;
+  --red: #c92a2a;
+  --yellow: #d9a033;
   --orange: #db6d28;
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-  --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
+  --font-sans: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', Consolas, monospace;
 }
 
+::selection { background: var(--accent); color: var(--bg-primary); }
 html { scroll-behavior: smooth; scroll-padding-top: 80px; }
 body {
   font-family: var(--font-sans);
@@ -40,9 +49,10 @@ body {
 /* NAV */
 nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  background: rgba(13, 17, 23, 0.85);
-  backdrop-filter: blur(12px);
+  background: #09090bdd;
+  backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
+  border-top: 2px solid var(--crimson);
   transition: box-shadow 0.3s;
 }
 nav.scrolled { box-shadow: 0 4px 24px rgba(0,0,0,0.4); }
@@ -55,7 +65,7 @@ nav.scrolled { box-shadow: 0 4px 24px rgba(0,0,0,0.4); }
   font-family: var(--font-mono); font-weight: 700; font-size: 1.25rem;
   color: var(--accent); text-decoration: none; letter-spacing: -0.5px;
 }
-.nav-logo span { color: var(--text-muted); }
+.nav-logo span { color: var(--crimson-bright); }
 .nav-links { display: flex; gap: 28px; list-style: none; }
 .nav-links a {
   color: var(--text-secondary); text-decoration: none; font-size: 0.875rem;
@@ -103,7 +113,12 @@ section { padding: 100px 24px; }
   font-size: clamp(2.25rem, 5.5vw, 3.75rem); font-weight: 800;
   line-height: 1.1; margin-bottom: 24px; letter-spacing: -1px;
 }
-.hero h1 .highlight { color: var(--accent); }
+.hero h1 .highlight {
+  background: linear-gradient(135deg, var(--crimson-bright), var(--accent-bright));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 .hero p {
   font-size: 1.2rem; color: var(--text-secondary); max-width: 560px;
   margin-bottom: 36px; line-height: 1.7;
@@ -115,7 +130,7 @@ section { padding: 100px 24px; }
   text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
   transition: transform 0.2s, box-shadow 0.2s;
 }
-.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(56,189,248,0.25); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 0 30px var(--accent-glow), 0 0 60px var(--crimson-dim); }
 .btn-secondary {
   background: transparent; color: var(--text-primary); padding: 14px 28px;
   border-radius: 8px; font-size: 1rem; font-weight: 600;
@@ -129,16 +144,17 @@ section { padding: 100px 24px; }
 .terminal {
   background: var(--bg-secondary); border: 1px solid var(--border);
   border-radius: 10px; margin-top: 60px; max-width: 680px;
-  overflow: hidden; box-shadow: 0 16px 48px rgba(0,0,0,0.3);
+  border-top: 2px solid var(--crimson);
+  overflow: hidden; box-shadow: 0 20px 60px #00000060;
 }
 .terminal-header {
   display: flex; align-items: center; gap: 8px;
   padding: 12px 16px; background: var(--bg-tertiary); border-bottom: 1px solid var(--border);
 }
 .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
-.terminal-dot.r { background: var(--red); }
-.terminal-dot.y { background: var(--yellow); }
-.terminal-dot.g { background: var(--green); }
+.terminal-dot.r { background: var(--crimson-bright); }
+.terminal-dot.y { background: var(--accent); }
+.terminal-dot.g { background: var(--border-bright); }
 .terminal-title {
   font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);
   margin-left: 8px;
@@ -212,14 +228,14 @@ section { padding: 100px 24px; }
   font-family: var(--font-mono); font-size: 0.7rem; font-weight: 600;
   padding: 4px 10px; border-radius: 4px; white-space: nowrap;
 }
-.tag-slow { color: var(--red); background: rgba(248,81,73,0.1); }
+.tag-slow { color: var(--crimson-bright); background: var(--crimson-dim); }
 .tag-lock { color: var(--orange); background: rgba(219,109,40,0.1); }
 .tag-toy { color: var(--yellow); background: rgba(210,153,34,0.1); }
-.tag-fragile { color: var(--red); background: rgba(248,81,73,0.1); }
+.tag-fragile { color: var(--crimson-bright); background: var(--crimson-dim); }
 
 /* HOW IT WORKS */
 .steps-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr);
+  display: grid; grid-template-columns: repeat(2, 1fr);
   gap: 32px; margin-top: 48px;
 }
 .step-card {
@@ -246,24 +262,6 @@ section { padding: 100px 24px; }
 .step-code .val { color: var(--green); }
 .step-code .comment { color: var(--text-muted); }
 
-/* TARGETS */
-.targets-section { background: var(--bg-secondary); }
-.targets-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px; margin-top: 48px;
-}
-.target-card {
-  background: var(--bg-tertiary); border: 1px solid var(--border);
-  border-radius: 10px; padding: 24px; text-align: center;
-  transition: border-color 0.2s, transform 0.2s;
-}
-.target-card:hover { border-color: var(--accent-dim); transform: translateY(-2px); }
-.target-icon {
-  font-size: 2rem; margin-bottom: 12px; display: block;
-}
-.target-card h4 { font-size: 1rem; margin-bottom: 4px; }
-.target-card p { font-size: 0.8rem; color: var(--text-muted); }
-
 /* PRICING */
 .pricing-grid {
   display: grid; grid-template-columns: repeat(4, 1fr);
@@ -276,14 +274,6 @@ section { padding: 100px 24px; }
   transition: border-color 0.2s, transform 0.2s;
 }
 .price-card:hover { transform: translateY(-4px); }
-.price-card.featured {
-  border-color: var(--accent); position: relative;
-}
-.price-card.featured::before {
-  content: 'MOST POPULAR'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
-  background: var(--accent); color: var(--bg-primary); font-size: 0.65rem; font-weight: 800;
-  padding: 4px 14px; border-radius: 20px; letter-spacing: 1px;
-}
 .price-tier {
   font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;
   color: var(--accent); letter-spacing: 1px; margin-bottom: 8px;
@@ -303,7 +293,7 @@ section { padding: 100px 24px; }
   padding-left: 20px; position: relative;
 }
 .price-features li::before {
-  content: '✓'; position: absolute; left: 0; color: var(--green);
+  content: '✓'; position: absolute; left: 0; color: var(--accent);
   font-weight: 700; font-size: 0.8rem;
 }
 .price-btn {
@@ -352,9 +342,39 @@ section { padding: 100px 24px; }
 .trust-card h4 { font-size: 1.1rem; margin-bottom: 12px; }
 .trust-card p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
 
+/* FOOTNOTES */
+.footnotes-section {
+  margin-top: 48px; padding-top: 32px;
+  border-top: 1px solid var(--border);
+}
+.footnotes-section h4 {
+  font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;
+  color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 16px;
+}
+.footnote-item {
+  font-size: 0.8rem; color: var(--text-muted); line-height: 1.6;
+  margin-bottom: 8px; padding-left: 20px; position: relative;
+}
+.footnote-item span.fn-num {
+  position: absolute; left: 0; color: var(--accent); font-weight: 700;
+  font-family: var(--font-mono); font-size: 0.75rem;
+}
+.footnote-item a {
+  color: var(--accent-dim); text-decoration: none;
+  transition: color 0.2s;
+}
+.footnote-item a:hover { color: var(--accent); }
+sup a {
+  color: var(--accent); text-decoration: none; font-weight: 700;
+  font-size: 0.7rem;
+}
+sup a:hover { text-decoration: underline; }
+
 /* FOOTER */
 footer {
   background: var(--bg-secondary); border-top: 1px solid var(--border);
+  border-bottom: 2px solid var(--crimson);
   padding: 60px 24px;
 }
 .footer-inner {
@@ -428,8 +448,8 @@ footer {
 <section class="hero" id="hero">
   <div class="container">
     <div class="hero-content">
-      <h1>Migrate terabytes from Elasticsearch.<br><span class="highlight">In a weekend. To anywhere.</span></h1>
-      <p>The only production-ready tool for TB-scale migrations from Elasticsearch and OpenSearch to ClickHouse, OpenObserve, Parseable, and beyond. Open source. Apache 2.0. No vendor lock-in.</p>
+      <h1>Elasticsearch 5–8. OpenSearch 1–3.<br>Any version. Any direction.<br><span class="highlight">In a weekend.</span></h1>
+      <p>The open-source migration engine for Elasticsearch and OpenSearch. Raw index-to-index data movement across every version combination. No vendor lock-in. Apache 2.0.</p>
       <div class="hero-buttons">
         <a href="https://github.com/kravex-net" class="btn-primary">
           <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
@@ -447,7 +467,7 @@ footer {
         <span class="terminal-title">kravex — migration</span>
       </div>
       <div class="terminal-body" id="terminalBody">
-        <div><span class="prompt">$</span> <span class="cmd">kravex migrate</span> <span class="flag">--config</span> <span class="cmd">production.yaml</span> <span class="flag">--dry-run</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">kravex migrate</span> <span class="flag">--config</span> <span class="cmd">kvx.toml</span></div>
       </div>
     </div>
   </div>
@@ -457,12 +477,11 @@ footer {
 <section class="problem-section" id="problem">
   <div class="container">
     <span class="section-label">The Problem</span>
-    <h2 class="section-title">Your ES alternative says "just let old data expire."<br>Your compliance team says no.</h2>
+    <h2 class="section-title">Switching between Elasticsearch and OpenSearch<br>means migrating all your existing data.</h2>
     <div class="problem-grid">
       <div>
-        <p class="problem-quote">"Redirect your log shippers to us and let your old Elasticsearch data expire."</p>
-        <p class="section-subtitle">Every ES alternative — ClickHouse, OpenObserve, Parseable, SigNoz, Grafana Loki — gives you the same advice. It's a non-starter for any organization with compliance requirements. You're sitting on 5–50+ TB of Elasticsearch data that <strong>cannot expire</strong>. You need to migrate it. And no production-ready tool does this for non-ES targets.</p>
-        <p class="section-subtitle" style="margin-top: 20px;"><strong>Until now.</strong></p>
+        <p class="problem-quote">"Just stand up a new cluster and re-index everything."</p>
+        <p class="section-subtitle">Whether you're moving from Elasticsearch to OpenSearch or the other way around, you're sitting on 5-50+ TB of production data that <strong>must come with you</strong>. Compliance mandates retention. Customers depend on historical search. And no existing tool handles this migration at TB-scale without weeks of custom engineering.</p>
       </div>
       <div class="compliance-grid">
         <div class="compliance-item">
@@ -493,43 +512,84 @@ footer {
 <!-- COMPETITORS -->
 <section id="competitors">
   <div class="container">
-    <span class="section-label">Why Existing Tools Fail</span>
+    <span class="section-label">Why Existing Tools Fall Short</span>
     <h2 class="section-title">You've already looked at the alternatives.<br>Here's why they didn't work.</h2>
     <div class="competitors-grid">
       <div class="competitor-card">
         <div class="competitor-name">Elasticdump</div>
-        <div class="competitor-verdict">~1 GB/hour. No parallelism, no checkpoint/resume, no schema transformation. Fine for dev. Unusable for production TB-scale.</div>
+        <div class="competitor-verdict">~1 GB/hour throughput.<sup><a href="#fn1" id="ref1">[1]</a></sup> <code>multielasticdump</code> supports <code>--parallel</code> across indexes, but single-index throughput is limited by the scroll API.<sup><a href="#fn2" id="ref2">[2]</a></sup> No checkpoint/resume. Fine for dev — impractical for production TB-scale.</div>
         <span class="competitor-tag tag-slow">~1 GB/hr</span>
       </div>
       <div class="competitor-card">
         <div class="competitor-name">Logstash</div>
-        <div class="competitor-verdict">Deep-pagination degradation: 6,000 docs/sec drops to 700 docs/sec on billion-document indexes. Weeks of tuning. No native non-ES target support.</div>
+        <div class="competitor-verdict">Deep-pagination degradation: 6,000 docs/sec drops to 700 docs/sec on billion-document indexes.<sup><a href="#fn3" id="ref3">[3]</a></sup> Weeks of tuning required to maintain throughput at scale.</div>
         <span class="competitor-tag tag-slow">88% throughput loss</span>
       </div>
       <div class="competitor-card">
         <div class="competitor-name">Reindex API</div>
-        <div class="competitor-verdict">Same pagination bottleneck. Cannot migrate mappings, settings, or templates. Source and destination must share cluster connectivity.</div>
+        <div class="competitor-verdict">Cannot migrate mappings, settings, or templates.<sup><a href="#fn4" id="ref4">[4]</a></sup> Source and destination must share direct connectivity (remote whitelist). Versioning and vendor compatibility problems between ES and OpenSearch forks.</div>
         <span class="competitor-tag tag-lock">ES-only</span>
       </div>
       <div class="competitor-card">
         <div class="competitor-name">AWS Migration Assistant</div>
-        <div class="competitor-verdict">The most capable tool — locked to Amazon OpenSearch Service as the only target. Requires CloudFormation, ECS, MSK, S3. Under 4 TB/day live capture.</div>
+        <div class="competitor-verdict">The most capable tool — locked to Amazon OpenSearch Service as the only target. Requires CloudFormation, ECS, MSK, S3. Under 4 TB/day live capture.<sup><a href="#fn5" id="ref5">[5]</a></sup></div>
         <span class="competitor-tag tag-lock">AWS-only</span>
       </div>
       <div class="competitor-card">
         <div class="competitor-name">Airbyte</div>
-        <div class="competitor-verdict">Generic ETL. No ES schema optimization, no ILM awareness, no shard topology handling. Per-row pricing — 10 TB costs thousands in credits.</div>
+        <div class="competitor-verdict">Generic ETL. No ES schema optimization, no shard topology handling.<sup><a href="#fn6" id="ref6">[6]</a></sup> Per-row pricing — 10 TB costs thousands in credits.<sup><a href="#fn7" id="ref7">[7]</a></sup></div>
         <span class="competitor-tag tag-toy">Generic ETL</span>
       </div>
       <div class="competitor-card">
         <div class="competitor-name">AI-generated scripts</div>
-        <div class="competitor-verdict">Works for 10K docs. Silently loses data at 10M. Crashes at 100M when scroll context times out. No checkpoint/resume, no backpressure, no retry logic.</div>
+        <div class="competitor-verdict">Works for 10K docs. Silently loses data at 10M. Crashes at 100M when scroll context times out.<sup><a href="#fn8" id="ref8">[8]</a></sup> No checkpoint/resume, no backpressure, no retry logic.</div>
         <span class="competitor-tag tag-fragile">Silent data loss</span>
       </div>
       <div class="competitor-card">
         <div class="competitor-name">Custom in-house tooling</div>
-        <div class="competitor-verdict">Contentsquare, Cloudflare, Uber, Didi — all built bespoke pipelines. Multi-month engineering projects. Kravex replaces this with a single weekend.</div>
+        <div class="competitor-verdict">Many organizations have built bespoke ES/OpenSearch migration pipelines. Multi-month engineering projects with ongoing maintenance burden.<sup><a href="#fn9" id="ref9">[9]</a></sup> Kravex replaces this with a single weekend.</div>
         <span class="competitor-tag tag-slow">3+ months</span>
+      </div>
+    </div>
+
+    <!-- FOOTNOTES -->
+    <div class="footnotes-section">
+      <h4>Sources</h4>
+      <div class="footnote-item" id="fn1">
+        <span class="fn-num">[1]</span>
+        <a href="https://discuss.elastic.co/t/elasticdump-performance-and-throughput/158561" target="_blank" rel="noopener">Elastic Discuss — Elasticdump performance and throughput</a> <a href="#ref1">&#8617;</a>
+      </div>
+      <div class="footnote-item" id="fn2">
+        <span class="fn-num">[2]</span>
+        <a href="https://github.com/elasticsearch-dump/elasticsearch-dump/issues/11" target="_blank" rel="noopener">elasticsearch-dump GitHub Issue #11 — Parallelism and scroll API limitations</a> <a href="#ref2">&#8617;</a>
+      </div>
+      <div class="footnote-item" id="fn3">
+        <span class="fn-num">[3]</span>
+        <a href="https://www.elastic.co/blog/migrating-1-billion-log-lines-from-opensearch-to-elasticsearch" target="_blank" rel="noopener">Elastic Blog — Migrating 1 billion log lines from OpenSearch to Elasticsearch</a> <a href="#ref3">&#8617;</a>
+      </div>
+      <div class="footnote-item" id="fn4">
+        <span class="fn-num">[4]</span>
+        <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-reindex.html" target="_blank" rel="noopener">Elastic Docs — Reindex API reference</a> <a href="#ref4">&#8617;</a>
+      </div>
+      <div class="footnote-item" id="fn5">
+        <span class="fn-num">[5]</span>
+        <a href="https://docs.opensearch.org/latest/migration-assistant/is-migration-assistant-right-for-you/" target="_blank" rel="noopener">OpenSearch Docs — Is Migration Assistant right for you? (CloudFormation/ECS/MSK/S3 requirements, &lt;4 TB/day live capture)</a> <a href="#ref5">&#8617;</a>
+      </div>
+      <div class="footnote-item" id="fn6">
+        <span class="fn-num">[6]</span>
+        <a href="https://docs.airbyte.com/integrations/destinations/elasticsearch" target="_blank" rel="noopener">Airbyte Docs — Elasticsearch destination connector (document-level only, no shard topology)</a> <a href="#ref6">&#8617;</a>
+      </div>
+      <div class="footnote-item" id="fn7">
+        <span class="fn-num">[7]</span>
+        <a href="https://airbyte.com/blog/introducing-volume-based-pricing" target="_blank" rel="noopener">Airbyte Blog — Introducing Volume-Based Pricing</a> <a href="#ref7">&#8617;</a>
+      </div>
+      <div class="footnote-item" id="fn8">
+        <span class="fn-num">[8]</span>
+        <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/scroll-api.html" target="_blank" rel="noopener">Elastic Docs — Scroll API (deprecated for deep pagination; context timeouts at scale)</a> <a href="#ref8">&#8617;</a>
+      </div>
+      <div class="footnote-item" id="fn9">
+        <span class="fn-num">[9]</span>
+        <a href="https://about.gitlab.com/blog/2021/06/01/advanced-search-data-migrations/" target="_blank" rel="noopener">GitLab Blog — Data migration process for Advanced Search (custom ES migration framework, weeks-to-months effort)</a> <a href="#ref9">&#8617;</a>
       </div>
     </div>
   </div>
@@ -539,102 +599,41 @@ footer {
 <section id="how" style="background: var(--bg-secondary);">
   <div class="container">
     <span class="section-label">How It Works</span>
-    <h2 class="section-title">Three steps. One weekend.</h2>
-    <p class="section-subtitle">Configuration-as-code. Validate before you commit. Resume if anything fails.</p>
+    <h2 class="section-title">Two steps. One weekend.</h2>
+    <p class="section-subtitle">Configuration-as-code. Resume if anything fails.</p>
     <div class="steps-grid">
       <div class="step-card">
         <div class="step-num">01 — CONFIGURE</div>
         <h3>Define your migration</h3>
-        <p>Declare source, target, indices, and transformations in a YAML config. Version-controllable, reviewable, repeatable.</p>
+        <p>Declare source, target, and runtime settings in a TOML config. Version-controllable, reviewable, repeatable.</p>
         <div class="step-code">
-<span class="key">source</span>:<br>
-&nbsp;&nbsp;<span class="key">type</span>: <span class="val">elasticsearch</span><br>
-&nbsp;&nbsp;<span class="key">host</span>: <span class="val">https://es-prod:9200</span><br>
-&nbsp;&nbsp;<span class="key">indices</span>: <span class="val">"logs-2024-*"</span><br>
+<span class="comment"># kvx.toml</span><br>
 <br>
-<span class="key">target</span>:<br>
-&nbsp;&nbsp;<span class="key">type</span>: <span class="val">clickhouse</span><br>
-&nbsp;&nbsp;<span class="key">host</span>: <span class="val">https://ch-cluster:8443</span><br>
+<span class="key">[runtime]</span><br>
+<span class="key">queue_capacity</span> = <span class="val">8</span><br>
+<span class="key">sink_parallelism</span> = <span class="val">4</span><br>
 <br>
-<span class="key">transform</span>:<br>
-&nbsp;&nbsp;<span class="key">flatten_nested</span>: <span class="val">true</span><br>
-&nbsp;&nbsp;<span class="key">ilm_to_ttl</span>: <span class="val">true</span>
+<span class="key">[source.Elasticsearch]</span><br>
+<span class="key">url</span> = <span class="val">"http://localhost:9200"</span><br>
+<span class="key">index</span> = <span class="val">"employees"</span><br>
+<br>
+<span class="key">[sink.OpenSearch]</span><br>
+<span class="key">url</span> = <span class="val">"http://localhost:9201"</span><br>
+<span class="key">index</span> = <span class="val">"employees"</span>
         </div>
       </div>
       <div class="step-card">
-        <div class="step-num">02 — VALIDATE</div>
-        <h3>Dry-run everything</h3>
-        <p>Pre-flight checks catch mapping errors, connectivity issues, and type incompatibilities before any data moves. No surprises.</p>
-        <div class="step-code">
-<span class="prompt">$</span> <span class="cmd">kravex migrate</span> <span class="flag">--dry-run</span><br><br>
-<span class="output">Connecting to source... </span><span class="success">OK</span><br>
-<span class="output">Connecting to target... </span><span class="success">OK</span><br>
-<span class="output">Validating mappings... </span><span class="success">OK</span><br>
-<span class="output">Type compatibility... </span><span class="success">OK</span><br>
-<span class="output">Indices matched: </span><span class="val">47</span><br>
-<span class="output">Estimated data: </span><span class="val">3.2 TB</span><br>
-<span class="output">Estimated time: </span><span class="val">~14 hours</span><br><br>
-<span class="success">✓ Ready to migrate</span>
-        </div>
-      </div>
-      <div class="step-card">
-        <div class="step-num">03 — MIGRATE</div>
-        <h3>Run it. Go to bed.</h3>
+        <div class="step-num">02 — MIGRATE</div>
+        <h3>Run the migration</h3>
         <p>Checkpoint/resume means if anything fails — network blip, node restart, disk full — you pick up exactly where you left off. Not from zero.</p>
         <div class="step-code">
-<span class="prompt">$</span> <span class="cmd">kravex migrate</span> <span class="flag">--config</span> <span class="cmd">production.yaml</span><br><br>
+<span class="prompt">$</span> <span class="cmd">kravex migrate</span> <span class="flag">--config</span> <span class="cmd">kvx.toml</span><br><br>
+<span class="output">employees </span><span class="success">████████████████</span> <span class="val">100%</span><br>
 <span class="output">logs-2024-01 </span><span class="success">████████████████</span> <span class="val">100%</span><br>
-<span class="output">logs-2024-02 </span><span class="success">████████████████</span> <span class="val">100%</span><br>
-<span class="output">logs-2024-03 </span><span class="success">██████████</span><span class="output">██████</span> <span class="val"> 62%</span><br>
-<span class="output">logs-2024-04 </span><span class="output">████████████████</span> <span class="text-muted"> queued</span><br><br>
+<span class="output">logs-2024-02 </span><span class="success">██████████</span><span class="output">██████</span> <span class="val"> 62%</span><br>
+<span class="output">logs-2024-03 </span><span class="output">████████████████</span> <span class="text-muted"> queued</span><br><br>
 <span class="output">Throughput: </span><span class="val">~240 GB/hr</span> <span class="output">| ETA: </span><span class="val">6h 12m</span>
         </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- TARGETS -->
-<section class="targets-section" id="targets">
-  <div class="container">
-    <span class="section-label">Supported Targets</span>
-    <h2 class="section-title">Migrate to the data store that fits your stack.</h2>
-    <p class="section-subtitle">First-class connectors with target-native optimizations. More on the roadmap — or build your own.</p>
-    <div class="targets-grid">
-      <div class="target-card">
-        <span class="target-icon">⚡</span>
-        <h4>ClickHouse</h4>
-        <p>Columnar analytics</p>
-      </div>
-      <div class="target-card">
-        <span class="target-icon">🔍</span>
-        <h4>OpenObserve</h4>
-        <p>Observability platform</p>
-      </div>
-      <div class="target-card">
-        <span class="target-icon">📊</span>
-        <h4>Parseable</h4>
-        <p>Cloud-native log analytics</p>
-      </div>
-      <div class="target-card">
-        <span class="target-icon">📈</span>
-        <h4>SigNoz</h4>
-        <p>Open-source APM</p>
-      </div>
-      <div class="target-card">
-        <span class="target-icon">📝</span>
-        <h4>VictoriaLogs</h4>
-        <p>High-performance logs</p>
-      </div>
-      <div class="target-card">
-        <span class="target-icon">🔗</span>
-        <h4>Grafana Loki</h4>
-        <p>Log aggregation</p>
-      </div>
-      <div class="target-card" style="border-style: dashed;">
-        <span class="target-icon">+</span>
-        <h4>Your Data Store</h4>
-        <p>Custom connectors available</p>
       </div>
     </div>
   </div>
@@ -656,38 +655,34 @@ footer {
         <div class="price-note">Apache 2.0 — forever</div>
         <ul class="price-features">
           <li>Full CLI migration engine</li>
+          <li>Config-as-code (TOML)</li>
+          <li>Community support (GitHub, Discord)</li>
+        </ul>
+        <a href="https://github.com/kravex-net" class="price-btn price-btn-outline">Get Started</a>
+      </div>
+
+      <!-- Pro -->
+      <div class="price-card">
+        <div class="price-tier">PRO</div>
+        <h3>Production</h3>
+        <div class="price-amount">Contact</div>
+        <div class="price-note">One-time license</div>
+        <ul class="price-features">
+          <li>Everything in Community</li>
           <li>All connectors and schema mapping</li>
-          <li>Config-as-code (YAML/JSON)</li>
           <li>Checkpoint/resume on failure</li>
           <li>Dry-run validation</li>
           <li>Index-level filtering</li>
           <li>Basic type mapping</li>
           <li>Docker image included</li>
-          <li>Community support (GitHub, Discord)</li>
-        </ul>
-        <a href="https://github.com/kravex-net" class="price-btn price-btn-outline">Get Started</a>
-        <div class="price-sub-options">Single-threaded · ~100 GB limit</div>
-      </div>
-
-      <!-- Pro -->
-      <div class="price-card featured">
-        <div class="price-tier">PRO</div>
-        <h3>Production</h3>
-        <div class="price-amount">$2,500</div>
-        <div class="price-note">One-time · up to 5 TB</div>
-        <ul class="price-features">
-          <li>Everything in Open Source</li>
           <li>TB-scale parallel shard processing</li>
           <li>Intelligent backpressure management</li>
-          <li>Advanced schema transforms</li>
-          <li>ILM-to-native retention translation</li>
           <li>Real-time terminal UI dashboard</li>
           <li>Multi-index orchestration</li>
           <li>Post-migration integrity checks</li>
           <li>Priority email support (24h SLA)</li>
         </ul>
-        <a href="mailto:daniel@kravex.net?subject=Kravex%20Pro%20License" class="price-btn price-btn-primary">Buy Pro License</a>
-        <div class="price-sub-options">$5K up to 25 TB · $10K unlimited</div>
+        <a href="mailto:daniel@kravex.net?subject=Kravex%20Pro%20License" class="price-btn price-btn-primary">Contact Sales</a>
       </div>
 
       <!-- Enterprise -->
@@ -698,12 +693,9 @@ footer {
         <div class="price-note">Direct sales</div>
         <ul class="price-features">
           <li>Everything in Pro</li>
-          <li>SSO/SAML 2.0 (Okta, Azure AD)</li>
           <li>Role-based access control</li>
           <li>Full audit logging</li>
           <li>Compliance-ready (SOC 2, HIPAA, PCI)</li>
-          <li>Continuous drift detection</li>
-          <li>Air-gapped / VPC deployment</li>
           <li>Dedicated SLA support</li>
           <li>Custom connector development</li>
         </ul>
@@ -741,7 +733,7 @@ footer {
   <div class="container">
     <span class="section-label">Compliance</span>
     <h2 class="section-title">Your compliance framework requires log retention.<br>Kravex makes migration possible without breaking the chain.</h2>
-    <p class="section-subtitle">The only migration tool that understands ILM policy translation and compliance-aware retention mapping across platforms.</p>
+    <p class="section-subtitle">The only migration tool built for compliance-aware data migration between Elasticsearch and OpenSearch.</p>
     <div class="framework-grid">
       <div class="framework-card">
         <h4>PCI DSS</h4>
@@ -783,12 +775,12 @@ footer {
         <p>The core migration engine is fully open source. No bait-and-switch. No open-core gotchas on the features that matter. Inspect the code, fork it, contribute to it.</p>
       </div>
       <div class="trust-card">
-        <h4>OpenSearch Community</h4>
-        <p>OpenSearch is Apache 2.0 and community-governed. AWS doesn't own it. Kravex serves every OpenSearch deployment — GCP, Azure, bare metal, any cloud. Not just AWS.</p>
+        <h4>Every Deployment</h4>
+        <p>OpenSearch is Apache 2.0 and governed by the Linux Foundation. Elasticsearch is triple-licensed under AGPLv3, ELv2, and SSPL (as of September 2024). Kravex supports every deployment — elastic.co Cloud, AWS OpenSearch Service, GCP, Azure, bare metal, self-hosted. Not just one vendor.</p>
       </div>
       <div class="trust-card">
         <h4>Battle-Tested Patterns</h4>
-        <p>Companies like Contentsquare achieved 11x cost reduction migrating ES to ClickHouse — but it took months of custom engineering. Kravex packages those hard-won patterns into a single tool.</p>
+        <p>TB-scale migrations between Elasticsearch and OpenSearch are full of edge cases — version incompatibilities, mapping drift, shard rebalancing under load, scroll context timeouts. Kravex packages those hard-won engineering patterns into a single tool.</p>
       </div>
     </div>
   </div>
@@ -814,7 +806,7 @@ footer {
   <div class="footer-inner">
     <div class="footer-brand">
       <a href="#" class="nav-logo">kravex<span>.net</span></a>
-      <p>TB-scale Elasticsearch and OpenSearch migrations to the data store that fits your stack.</p>
+      <p>Elasticsearch and OpenSearch migrations — every deployment, any scale.</p>
     </div>
     <div class="footer-links">
       <h5>Product</h5>
@@ -859,20 +851,18 @@ navLinks.querySelectorAll('a').forEach(a => {
 
 // Terminal typing animation
 const terminalLines = [
-  { delay: 800, html: '<span class="output">\nConnecting to es-prod:9200... </span><span class="success">OK</span>' },
-  { delay: 400, html: '<span class="output">\nConnecting to ch-cluster:8443... </span><span class="success">OK</span>' },
-  { delay: 600, html: '<span class="output">\nDry-run mode: validating configuration...</span>' },
-  { delay: 500, html: '<span class="output">\nIndices matched: </span><span class="cmd">47</span><span class="output"> (pattern: logs-2024-*)</span>' },
+  { delay: 800, html: '<span class="output">\nConnecting to localhost:9200... </span><span class="success">OK</span>' },
+  { delay: 400, html: '<span class="output">\nConnecting to localhost:9201... </span><span class="success">OK</span>' },
+  { delay: 600, html: '<span class="output">\nReading source index mappings...</span>' },
+  { delay: 500, html: '<span class="output">\nIndices matched: </span><span class="cmd">12</span>' },
   { delay: 400, html: '<span class="output">\nTotal estimated size: </span><span class="cmd">3.2 TB</span>' },
   { delay: 300, html: '<span class="output">\nMapping compatibility: </span><span class="success">PASS</span>' },
-  { delay: 300, html: '<span class="output">\nILM policies detected: </span><span class="cmd">12</span><span class="output"> → converting to ClickHouse TTL</span>' },
-  { delay: 500, html: '<span class="output">\n</span><span class="success">✓ Dry-run complete. Ready to migrate.</span>' },
-  { delay: 1000, html: '\n\n<span class="prompt">$</span> <span class="cmd">kravex migrate</span> <span class="flag">--config</span> <span class="cmd">production.yaml</span>' },
-  { delay: 800, html: '<span class="output">\n\nStarting migration with </span><span class="cmd">8 workers</span><span class="output">...</span>' },
-  { delay: 400, html: '<span class="output">\n\n  logs-2024-01  </span><span class="success">████████████████</span> <span class="cmd">100%</span><span class="output">  142 GB  18m</span>' },
-  { delay: 600, html: '<span class="output">\n  logs-2024-02  </span><span class="success">████████████████</span> <span class="cmd">100%</span><span class="output">  138 GB  17m</span>' },
-  { delay: 400, html: '<span class="output">\n  logs-2024-03  </span><span class="success">██████████</span><span class="output">██████</span> <span class="cmd"> 62%</span><span class="output">   89 GB  est. 9m</span>' },
-  { delay: 200, html: '<span class="output">\n  logs-2024-04  </span><span class="text-muted">················</span><span class="output">  queued</span>' },
+  { delay: 500, html: '<span class="output">\n</span><span class="success">✓ Starting migration...</span>' },
+  { delay: 800, html: '\n\n<span class="output">Starting migration with </span><span class="cmd">4 sink workers</span><span class="output">...</span>' },
+  { delay: 400, html: '<span class="output">\n\n  employees     </span><span class="success">████████████████</span> <span class="cmd">100%</span><span class="output">   42 GB   5m</span>' },
+  { delay: 600, html: '<span class="output">\n  logs-2024-01  </span><span class="success">████████████████</span> <span class="cmd">100%</span><span class="output">  142 GB  18m</span>' },
+  { delay: 400, html: '<span class="output">\n  logs-2024-02  </span><span class="success">██████████</span><span class="output">██████</span> <span class="cmd"> 62%</span><span class="output">   89 GB  est. 9m</span>' },
+  { delay: 200, html: '<span class="output">\n  logs-2024-03  </span><span class="text-muted">················</span><span class="output">  queued</span>' },
   { delay: 600, html: '<span class="output">\n\n  Throughput: </span><span class="cmd">~240 GB/hr</span><span class="output">  |  ETA: </span><span class="cmd">6h 12m</span><span class="output">  |  Errors: </span><span class="success">0</span>' },
 ];
 
